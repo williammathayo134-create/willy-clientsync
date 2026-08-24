@@ -12,21 +12,31 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
     - name: Set up Python 3.10
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
-    - name: Install dependencies
+    - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libsqlite3-dev sqlite3 bzip2 libbz2-dev libssl-dev openssl libffi-dev zlib1g-dev libreadline-dev libncurses5-dev libncursesw5-dev libgdbm-dev libffi-dev liblzma-dev tk-dev git default-jdk
-        pip install --upgrade pip
-        pip install buildozer cython==0.29.33
+        sudo apt-get install -y build-essential libsqlite3-dev sqlite3 bzip2 libbz2-dev libssl-dev openssl libffi-dev zlib1g-dev libreadline-dev libncurses5-dev libncursesw5-dev libgdbm-dev liblzma-dev tk-dev git zip unzip ccache lld autoconf libtool pkg-config
 
-    - name: Build APK with Buildozer
+    - name: Install Buildozer & Cython
       run: |
-        yes | buildozer android debug
+        pip install --upgrade pip setuptools
+        pip install "cython<3.0.0"
+        pip install buildozer
+
+    - name: Build APK
+      run: |
+        yes | buildozer -v android debug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
