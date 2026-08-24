@@ -1,6 +1,6 @@
 [app]
 title = Willy ClientSync
-package.name = willyclientsync
+package.name = willyclientsync02
 package.domain = org.willy
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
