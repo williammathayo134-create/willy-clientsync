@@ -58,10 +58,10 @@ def login():
 def get_clients():
     conn = sqlite3.connect("clientsync.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT name, phone FROM clients")
+    cursor.execute("SELECT id, name, phone FROM clients")
     rows = cursor.fetchall()
     conn.close()
-    clients = [{"name": r[0], "phone": r[1]} for r in rows]
+    clients = [{"id": r[0], "name": r[1], "phone": r[2]} for r in rows]
     return jsonify(clients), 200
 
 @app.route('/clients', methods=['POST'])
@@ -77,6 +77,15 @@ def add_client():
     conn.commit()
     conn.close()
     return jsonify({"message": "Mteja ameongezwa kikamilifu!"}), 201
+
+@app.route('/clients/<int:client_id>', methods=['DELETE'])
+def delete_client(client_id):
+    conn = sqlite3.connect("clientsync.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM clients WHERE id=?", (client_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Mteja amefutwa kikamilifu!"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -53,21 +53,29 @@ class LoginScreen(Screen):
 class DashboardScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.all_clients = []
         layout = BoxLayout(orientation='vertical', padding=15, spacing=10)
         
-        layout.add_widget(Label(text="Dashboard - Wateja Wako", font_size=20))
+        layout.add_widget(Label(text="Dashboard - Usimamizi wa Wateja", font_size=20))
         
+        # Form ya kuongeza mteja
         self.name_input = TextInput(hint_text="Jina la Mteja", multiline=False)
         self.phone_input = TextInput(hint_text="Namba ya Simu", multiline=False)
         layout.add_widget(self.name_input)
         layout.add_widget(self.phone_input)
         
-        btn_add = Button(text="Hifadhi Mteja", on_press=self.add_client)
-        btn_refresh = Button(text="Onyesha Wateja", on_press=self.fetch_clients)
+        btn_add = Button(text="Hifadhi Mteja MPYA", on_press=self.add_client)
         layout.add_widget(btn_add)
+        
+        # Search Box
+        self.search_input = TextInput(hint_text="Tafuta mteja kwa jina...", multiline=False)
+        self.search_input.bind(text=self.filter_clients)
+        layout.add_widget(self.search_input)
+        
+        btn_refresh = Button(text="Pakua Orodha Upya", on_press=self.fetch_clients)
         layout.add_widget(btn_refresh)
         
-        self.clients_label = Label(text="Bonyeza 'Onyesha Wateja' kupata orodha", size_hint_y=None)
+        self.clients_label = Label(text="Bonyeza 'Pakua Orodha Upya'", size_hint_y=None)
         self.clients_label.bind(texture_size=self.clients_label.setter('size'))
         
         scroll = ScrollView()
@@ -93,11 +101,19 @@ class DashboardScreen(Screen):
         try:
             res = requests.get(url)
             if res.status_code == 200:
-                data = res.json()
-                text = "\n".join([f"• {c['name']} - {c['phone']}" for c in data])
-                self.clients_label.text = text if text else "Hakuna mteja aliyesajiliwa"
+                self.all_clients = res.json()
+                self.render_clients(self.all_clients)
         except:
             self.clients_label.text = "Haikuweza kupata data"
+
+    def render_clients(self, client_list):
+        text = "\n".join([f"• ID: {c['id']} | {c['name']} - {c['phone']}" for c in client_list])
+        self.clients_label.text = text if text else "Hakuna mteja aliyepatikana"
+
+    def filter_clients(self, instance, value):
+        query = value.lower()
+        filtered = [c for c in self.all_clients if query in c['name'].lower() or query in c['phone']]
+        self.render_clients(filtered)
 
 class WillyApp(App):
     def build(self):
