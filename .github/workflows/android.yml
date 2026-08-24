@@ -1,8 +1,10 @@
+
 name: Build Android APK
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -31,3 +33,4 @@ jobs:
       with:
         name: WillyClientSync-APK
         path: bin/*.apk
+  
