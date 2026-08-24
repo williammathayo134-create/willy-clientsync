@@ -12,14 +12,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Buildizer Action
-      uses: Joshour/buildozer-action@v1.3.0
+    - name: Build with Buildozer
+      uses: ArtemSBulgakov/buildozer-action@v1
       with:
         command: buildozer android debug
-        subfolder: .
+        repository_root: .
+        workdir: .
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: WillyClientSync-APK
-        path: bin/*.apk
+        path: ./*.apk
