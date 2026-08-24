@@ -1,5 +1,6 @@
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
@@ -53,67 +54,32 @@ class LoginScreen(Screen):
 class DashboardScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.all_clients = []
-        layout = BoxLayout(orientation='vertical', padding=15, spacing=10)
+        main_layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
         
-        layout.add_widget(Label(text="Dashboard - Usimamizi wa Wateja", font_size=20))
+        main_layout.add_widget(Label(text="Willy ClientSync - Moduli 25 za Biashara", font_size=18, size_hint_y=None, height=40))
         
-        # Form ya kuongeza mteja
-        self.name_input = TextInput(hint_text="Jina la Mteja", multiline=False)
-        self.phone_input = TextInput(hint_text="Namba ya Simu", multiline=False)
-        layout.add_widget(self.name_input)
-        layout.add_widget(self.phone_input)
+        modules = [
+            "1. Wateja", "2. Mauzo", "3. Stoko/Stock", "4. Madeni",
+            "5. Miamala", "6. Wagavi", "7. Purchase Orders", "8. Matumizi",
+            "9. Faida & Hasara", "10. Ripoti Mauzo", "11. Wafanyakazi", "12. Mahudhurio",
+            "13. Mishahara", "14. Invoices", "15. Kodi/VAT", "16. Offa/Discounts",
+            "17. Loyalty Points", "18. Matawi", "19. Returns", "20. SMS/Email",
+            "21. Offline Sync", "22. Ruhusa/Roles", "23. Activity Logs", "24. Nyaraka",
+            "25. Backup Data"
+        ]
         
-        btn_add = Button(text="Hifadhi Mteja MPYA", on_press=self.add_client)
-        layout.add_widget(btn_add)
+        grid = GridLayout(cols=2, spacing=10, size_hint_y=None)
+        grid.bind(minimum_height=grid.setter('height'))
         
-        # Search Box
-        self.search_input = TextInput(hint_text="Tafuta mteja kwa jina...", multiline=False)
-        self.search_input.bind(text=self.filter_clients)
-        layout.add_widget(self.search_input)
-        
-        btn_refresh = Button(text="Pakua Orodha Upya", on_press=self.fetch_clients)
-        layout.add_widget(btn_refresh)
-        
-        self.clients_label = Label(text="Bonyeza 'Pakua Orodha Upya'", size_hint_y=None)
-        self.clients_label.bind(texture_size=self.clients_label.setter('size'))
-        
+        for mod in modules:
+            btn = Button(text=mod, size_hint_y=None, height=50)
+            grid.add_widget(btn)
+            
         scroll = ScrollView()
-        scroll.add_widget(self.clients_label)
-        layout.add_widget(scroll)
+        scroll.add_widget(grid)
+        main_layout.add_widget(scroll)
         
-        self.add_widget(layout)
-
-    def add_client(self, instance):
-        url = f"{API_BASE_URL}/clients"
-        payload = {"name": self.name_input.text, "phone": self.phone_input.text}
-        try:
-            res = requests.post(url, json=payload)
-            if res.status_code == 201:
-                self.name_input.text = ""
-                self.phone_input.text = ""
-                self.fetch_clients(None)
-        except:
-            pass
-
-    def fetch_clients(self, instance):
-        url = f"{API_BASE_URL}/clients"
-        try:
-            res = requests.get(url)
-            if res.status_code == 200:
-                self.all_clients = res.json()
-                self.render_clients(self.all_clients)
-        except:
-            self.clients_label.text = "Haikuweza kupata data"
-
-    def render_clients(self, client_list):
-        text = "\n".join([f"• ID: {c['id']} | {c['name']} - {c['phone']}" for c in client_list])
-        self.clients_label.text = text if text else "Hakuna mteja aliyepatikana"
-
-    def filter_clients(self, instance, value):
-        query = value.lower()
-        filtered = [c for c in self.all_clients if query in c['name'].lower() or query in c['phone']]
-        self.render_clients(filtered)
+        self.add_widget(main_layout)
 
 class WillyApp(App):
     def build(self):

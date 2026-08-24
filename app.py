@@ -54,38 +54,5 @@ def login():
         return jsonify({"message": "Imefanikiwa", "token": f"token_secret_{username}"}), 200
     return jsonify({"message": "Username au Password sio sahihi"}), 401
 
-@app.route('/clients', methods=['GET'])
-def get_clients():
-    conn = sqlite3.connect("clientsync.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name, phone FROM clients")
-    rows = cursor.fetchall()
-    conn.close()
-    clients = [{"id": r[0], "name": r[1], "phone": r[2]} for r in rows]
-    return jsonify(clients), 200
-
-@app.route('/clients', methods=['POST'])
-def add_client():
-    data = request.json
-    name = data.get('name')
-    phone = data.get('phone')
-    if not name or not phone:
-        return jsonify({"message": "Jaza jina na namba ya simu"}), 400
-    conn = sqlite3.connect("clientsync.db")
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO clients (name, phone) VALUES (?, ?)", (name, phone))
-    conn.commit()
-    conn.close()
-    return jsonify({"message": "Mteja ameongezwa kikamilifu!"}), 201
-
-@app.route('/clients/<int:client_id>', methods=['DELETE'])
-def delete_client(client_id):
-    conn = sqlite3.connect("clientsync.db")
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM clients WHERE id=?", (client_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({"message": "Mteja amefutwa kikamilifu!"}), 200
-
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
