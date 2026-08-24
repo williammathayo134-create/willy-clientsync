@@ -1,53 +1,72 @@
 from flask import Flask, request, jsonify
-from flask_bcrypt import Bcrypt
-import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
+import sqlite3
+import datetime
 
 app = Flask(__name__)
-bcrypt = Bcrypt(app)
-
 app.config['SECRET_KEY'] = 'willy_super_secret_key_2026'
 
-users_db = {}
+DB_NAME = 'clientsync.db'
 
-@app.route('/')
-def home():
-    return jsonify({"message": "Willy ClientSync Backend Running with Encryption!"})
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
-@app.route('/api/register', methods=['POST'])
+# Anzisha database mara moja
+init_db()
+
+@app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
 
     if not username or not password:
-        return jsonify({"error": "Tafadhali weka username na password"}), 400
+        return jsonify({"message": "Tafadhali weka username na password"}), 400
 
-    if username in users_db:
-        return jsonify({"error": "Mtumiaji huyu tayari yupo"}), 400
+    hashed_pw = generate_password_hash(password)
 
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    users_db[username] = hashed_password
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_pw))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Akaunti imetengenezwa kikamilifu!"}), 201
+    except sqlite3.IntegrityError:
+        return jsonify({"message": "Jina hili la mtumiaji tayari lipo!"}), 400
 
-    return jsonify({"message": f"Mtumiaji {username} amesajiliwa kwa usalama!"}), 201
-
-@app.route('/api/login', methods=['POST'])
+@app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
 
-    user_password_hash = users_db.get(username)
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, password FROM users WHERE username = ?", (username,))
+    user = cursor.fetchone()
+    conn.close()
 
-    if user_password_hash and bcrypt.check_password_hash(user_password_hash, password):
+    if user and check_password_hash(user[1], password):
         token = jwt.encode({
-            'user': username,
+            'user_id': user[0],
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
         }, app.config['SECRET_KEY'], algorithm="HS256")
+        
+        return jsonify({"message": "Umeingia kwa mafanikio!", "token": token}), 200
 
-        return jsonify({"message": "Umeingia kikamilifu!", "token": token}), 200
-
-    return jsonify({"error": "Username au Password sio sahihi"}), 401
+    return jsonify({"message": "Taarifa zilizowekwa si sahihi!"}), 401
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
